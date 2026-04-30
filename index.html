@@ -484,30 +484,93 @@ body{font-family:'Inter',sans-serif;background:var(--bg-primary);color:var(--tex
 
       <!-- DEPOSIT -->
       <div id="depositTab">
-        <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:12px;">Select amount or enter custom</p>
-        <div class="dep-amounts">
-          <div class="dep-amount" onclick="selectDepAmt(this,500)">₹500</div>
-          <div class="dep-amount" onclick="selectDepAmt(this,1000)">₹1,000</div>
-          <div class="dep-amount" onclick="selectDepAmt(this,2000)">₹2,000</div>
-          <div class="dep-amount" onclick="selectDepAmt(this,5000)">₹5,000</div>
+        <!-- STEP 1: Enter Amount -->
+        <div id="depositStep1">
+          <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:12px;">Select amount or enter custom</p>
+          <div class="dep-amounts">
+            <div class="dep-amount" onclick="selectDepAmt(this,500)">₹500</div>
+            <div class="dep-amount" onclick="selectDepAmt(this,1000)">₹1,000</div>
+            <div class="dep-amount" onclick="selectDepAmt(this,2000)">₹2,000</div>
+            <div class="dep-amount" onclick="selectDepAmt(this,5000)">₹5,000</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Amount (₹)</label>
+            <input class="form-input" id="depositAmount" type="number" placeholder="Enter amount (min ₹100)" min="100">
+          </div>
+          <button class="submit-btn green" onclick="showDepositQR()">PROCEED TO PAY</button>
+          <div class="modal-msg" id="depositMsg"></div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Amount (₹)</label>
-          <input class="form-input" id="depositAmount" type="number" placeholder="Enter amount (min ₹100)" min="100">
+
+        <!-- STEP 2: QR + UTR -->
+        <div id="depositStep2" style="display:none;text-align:center;">
+          <div style="background:rgba(0,180,255,0.07);border:1px solid rgba(0,180,255,0.2);border-radius:12px;padding:14px;margin-bottom:14px;">
+            <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:4px;">Pay exactly</p>
+            <p style="font-size:1.6rem;font-family:'Rajdhani',sans-serif;font-weight:800;color:var(--accent-cyan);" id="qrAmountDisplay">₹0</p>
+            <p style="font-size:0.72rem;color:var(--text-secondary);">to our UPI ID</p>
+            <p style="font-size:0.92rem;font-weight:700;color:#fff;margin:4px 0;letter-spacing:1px;" id="upiIdDisplay">7480019210@slc</p>
+          </div>
+
+          <!-- QR CODE -->
+          <div style="background:#fff;border-radius:12px;padding:10px;display:inline-block;margin-bottom:12px;">
+            <img id="depositQRImg" src="" alt="UPI QR Code" style="width:180px;height:180px;display:block;">
+          </div>
+
+          <p style="font-size:0.72rem;color:var(--text-secondary);margin-bottom:12px;">Scan with any UPI app (GPay, PhonePe, Paytm, etc.)</p>
+
+          <!-- TIMER -->
+          <div style="background:rgba(255,200,0,0.08);border:1px solid rgba(255,200,0,0.25);border-radius:8px;padding:8px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <span style="font-size:0.8rem;color:#ffc800;">⏱ Time remaining:</span>
+            <span id="depositTimer" style="font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:800;color:#ffc800;">02:00</span>
+          </div>
+
+          <!-- I HAVE PAID checkbox -->
+          <div style="display:flex;align-items:center;gap:8px;background:rgba(0,255,150,0.06);border:1px solid rgba(0,255,150,0.2);border-radius:8px;padding:10px 14px;margin-bottom:14px;cursor:pointer;" onclick="togglePaidCheck()">
+            <div id="paidCheckbox" style="width:18px;height:18px;border:2px solid var(--accent-green);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;"></div>
+            <span style="font-size:0.82rem;color:var(--text-secondary);">I have completed the payment</span>
+          </div>
+
+          <!-- UTR Field (hidden until checked) -->
+          <div id="utrSection" style="display:none;">
+            <div class="form-group" style="text-align:left;">
+              <label class="form-label">UTR / Transaction Reference Number</label>
+              <input class="form-input" id="utrNumber" type="text" placeholder="Enter 12-digit UTR number" maxlength="22">
+              <p style="font-size:0.7rem;color:var(--text-secondary);margin-top:4px;">Find UTR in your UPI app under payment history</p>
+            </div>
+            <button class="submit-btn green" onclick="submitDepositUTR()">SUBMIT FOR VERIFICATION</button>
+          </div>
+
+          <button onclick="cancelDepositQR()" style="background:none;border:none;color:var(--text-secondary);font-size:0.78rem;cursor:pointer;margin-top:8px;text-decoration:underline;">← Go back</button>
+          <div class="modal-msg" id="depositMsg2"></div>
         </div>
-        <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:8px;">Payment Method</p>
-        <div class="method-btns">
-          <div class="method-btn selected" id="methUPI" onclick="selectMethod('upi')">📱 UPI</div>
-          <div class="method-btn" id="methCard" onclick="selectMethod('card')">💳 Card</div>
-          <div class="method-btn" id="methNet" onclick="selectMethod('netbanking')">🏦 Net Banking</div>
-        </div>
-        <button class="submit-btn green" onclick="doDeposit()">DEPOSIT NOW</button>
-        <div class="modal-msg" id="depositMsg"></div>
       </div>
 
       <!-- WITHDRAW -->
       <div id="withdrawTab" style="display:none;">
         <div class="bank-info" id="withdrawBankInfo"></div>
+
+        <!-- Withdraw method selector -->
+        <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:8px;">Withdraw to</p>
+        <div class="method-btns" style="margin-bottom:14px;">
+          <div class="method-btn selected" id="wMethUPI" onclick="selectWithdrawMethod('upi')">📱 UPI</div>
+          <div class="method-btn" id="wMethBank" onclick="selectWithdrawMethod('bank')">🏦 Bank</div>
+        </div>
+
+        <!-- UPI withdraw fields -->
+        <div id="withdrawUPIFields">
+          <div class="form-group">
+            <label class="form-label">Your UPI ID</label>
+            <input class="form-input" id="withdrawUPIId" type="text" placeholder="yourname@upi / 9876543210@gpay">
+          </div>
+        </div>
+
+        <!-- Bank withdraw fields -->
+        <div id="withdrawBankFields" style="display:none;">
+          <div class="bank-info" id="withdrawBankDetails" style="margin-bottom:10px;"></div>
+          <p style="font-size:0.72rem;color:var(--text-secondary);margin-bottom:10px;">
+            No bank saved? <a href="#" onclick="closeModal('walletModal');openModal('bankModal')" style="color:var(--accent-cyan);">Add bank details →</a>
+          </p>
+        </div>
+
         <div class="form-group">
           <label class="form-label">Amount (₹)</label>
           <input class="form-input" id="withdrawAmount" type="number" placeholder="Enter amount (min ₹100)" min="100">
@@ -1162,47 +1225,162 @@ function updateBalanceDisplay(bal) {
   document.getElementById('balanceDisplay').textContent = parseFloat(bal).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
 }
 
-async function doDeposit() {
+// ── YOUR UPI DETAILS ─────────────────────────────────────────
+const MY_UPI_ID  = '7480019210@slc';           // ← change this
+const MY_UPI_QR  = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=';
+// ─────────────────────────────────────────────────────────────
+
+let depositTimerInterval = null;
+let paidChecked = false;
+let selectedWithdrawMethod = 'upi';
+
+function selectWithdrawMethod(m) {
+  selectedWithdrawMethod = m;
+  document.getElementById('wMethUPI').classList.toggle('selected', m === 'upi');
+  document.getElementById('wMethBank').classList.toggle('selected', m === 'bank');
+  document.getElementById('withdrawUPIFields').style.display  = m === 'upi'  ? '' : 'none';
+  document.getElementById('withdrawBankFields').style.display = m === 'bank' ? '' : 'none';
+}
+
+function showDepositQR() {
   const amount = parseFloat(document.getElementById('depositAmount').value);
   const msg = document.getElementById('depositMsg');
   if (!amount || amount < 100) { msg.className='modal-msg err'; msg.textContent='Minimum deposit is ₹100'; return; }
-  msg.className='modal-msg'; msg.textContent='Processing...';
+  if (amount > 100000) { msg.className='modal-msg err'; msg.textContent='Maximum deposit is ₹1,00,000'; return; }
+
+  // Build UPI deep-link for QR
+  const upiLink = `upi://pay?pa=${MY_UPI_ID}&pn=DrippyGames&am=${amount}&cu=INR&tn=DrippyDeposit`;
+  document.getElementById('depositQRImg').src = MY_UPI_QR + encodeURIComponent(upiLink);
+  document.getElementById('qrAmountDisplay').textContent = `₹${amount.toLocaleString('en-IN')}`;
+  document.getElementById('upiIdDisplay').textContent = MY_UPI_ID;
+
+  document.getElementById('depositStep1').style.display = 'none';
+  document.getElementById('depositStep2').style.display = '';
+
+  // Reset state
+  paidChecked = false;
+  document.getElementById('paidCheckbox').innerHTML = '';
+  document.getElementById('paidCheckbox').style.background = '';
+  document.getElementById('utrSection').style.display = 'none';
+  document.getElementById('utrNumber').value = '';
+  document.getElementById('depositMsg2').textContent = '';
+
+  // Start 2-min timer
+  let secs = 120;
+  clearInterval(depositTimerInterval);
+  updateTimerDisplay(secs);
+  depositTimerInterval = setInterval(() => {
+    secs--;
+    updateTimerDisplay(secs);
+    if (secs <= 0) {
+      clearInterval(depositTimerInterval);
+      document.getElementById('depositMsg2').className = 'modal-msg err';
+      document.getElementById('depositMsg2').textContent = '⏱ Time expired. Please start over.';
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay(secs) {
+  const m = String(Math.floor(secs / 60)).padStart(2, '0');
+  const s = String(secs % 60).padStart(2, '0');
+  const el = document.getElementById('depositTimer');
+  el.textContent = `${m}:${s}`;
+  el.style.color = secs <= 30 ? '#ff3d57' : '#ffc800';
+}
+
+function togglePaidCheck() {
+  paidChecked = !paidChecked;
+  const box = document.getElementById('paidCheckbox');
+  if (paidChecked) {
+    box.innerHTML = '✓';
+    box.style.background = 'var(--accent-green)';
+    box.style.color = '#000';
+    box.style.borderColor = 'var(--accent-green)';
+    document.getElementById('utrSection').style.display = '';
+  } else {
+    box.innerHTML = '';
+    box.style.background = '';
+    box.style.color = '';
+    box.style.borderColor = 'var(--accent-green)';
+    document.getElementById('utrSection').style.display = 'none';
+  }
+}
+
+function cancelDepositQR() {
+  clearInterval(depositTimerInterval);
+  document.getElementById('depositStep1').style.display = '';
+  document.getElementById('depositStep2').style.display = 'none';
+}
+
+async function submitDepositUTR() {
+  const amount = parseFloat(document.getElementById('depositAmount').value);
+  const utr = document.getElementById('utrNumber').value.trim();
+  const msg = document.getElementById('depositMsg2');
+
+  if (!utr || utr.length < 10) { msg.className='modal-msg err'; msg.textContent='Please enter a valid UTR number'; return; }
+
+  msg.className='modal-msg'; msg.textContent='Submitting...';
   try {
     const r = await fetch(`${API}/wallet/deposit`, {
-      method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-      body: JSON.stringify({ amount, method: selectedMethod })
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body: JSON.stringify({ amount, method: 'upi', utr })
     });
     const data = await r.json();
     if (!r.ok) { msg.className='modal-msg err'; msg.textContent=data.error||'Failed'; return; }
-    msg.className='modal-msg success'; msg.textContent=`✅ ${data.message}`;
+    clearInterval(depositTimerInterval);
+    msg.className='modal-msg success';
+    msg.textContent=`✅ Deposit of ₹${amount} submitted! UTR: ${utr}. We'll verify & credit within 30 mins.`;
     updateBalanceDisplay(data.newBalance);
-    toast(`₹${amount} deposited successfully!`, 'green');
-    document.getElementById('depositAmount').value = '';
+    toast(`₹${amount} deposit submitted for verification!`, 'green');
+    setTimeout(() => cancelDepositQR(), 3000);
   } catch(e) { msg.className='modal-msg err'; msg.textContent='Server error'; }
 }
+
+async function doDeposit() { showDepositQR(); } // kept for compatibility
 
 async function doWithdraw() {
   const amount = parseFloat(document.getElementById('withdrawAmount').value);
   const msg = document.getElementById('withdrawMsg');
   if (!amount || amount < 100) { msg.className='modal-msg err'; msg.textContent='Minimum withdrawal is ₹100'; return; }
-  if (!currentUser?.bankDetails?.accountNumber) {
-    msg.className='modal-msg err'; msg.textContent='Please add bank details first'; 
-    setTimeout(()=>{closeModal('walletModal');openModal('bankModal');},1000);
-    return;
+  if (currentUser && amount > currentUser.balance) { msg.className='modal-msg err'; msg.textContent='Insufficient balance'; return; }
+
+  if (selectedWithdrawMethod === 'upi') {
+    const upiId = document.getElementById('withdrawUPIId').value.trim();
+    if (!upiId || !upiId.includes('@')) { msg.className='modal-msg err'; msg.textContent='Please enter a valid UPI ID (e.g. name@upi)'; return; }
+    msg.className='modal-msg'; msg.textContent='Processing...';
+    try {
+      const r = await fetch(`${API}/wallet/withdraw`, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ amount, method: 'upi', upiId })
+      });
+      const data = await r.json();
+      if (!r.ok) { msg.className='modal-msg err'; msg.textContent=data.error||'Failed'; return; }
+      msg.className='modal-msg success'; msg.textContent=`✅ ₹${amount} withdrawal to ${upiId} initiated. Processing in 1-24 hrs.`;
+      updateBalanceDisplay(data.newBalance);
+      toast(`Withdrawal of ₹${amount} initiated`, 'green');
+      document.getElementById('withdrawAmount').value = '';
+    } catch(e) { msg.className='modal-msg err'; msg.textContent='Server error'; }
+  } else {
+    if (!currentUser?.bankDetails?.accountNumber) {
+      msg.className='modal-msg err'; msg.textContent='Please add bank details first';
+      setTimeout(()=>{closeModal('walletModal');openModal('bankModal');},1000);
+      return;
+    }
+    msg.className='modal-msg'; msg.textContent='Processing...';
+    try {
+      const r = await fetch(`${API}/wallet/withdraw`, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ amount, method: 'bank' })
+      });
+      const data = await r.json();
+      if (!r.ok) { msg.className='modal-msg err'; msg.textContent=data.error||'Failed'; return; }
+      msg.className='modal-msg success'; msg.textContent=`✅ ${data.message}`;
+      updateBalanceDisplay(data.newBalance);
+      toast(`Withdrawal of ₹${amount} initiated`, 'green');
+      document.getElementById('withdrawAmount').value = '';
+    } catch(e) { msg.className='modal-msg err'; msg.textContent='Server error'; }
   }
-  msg.className='modal-msg'; msg.textContent='Processing...';
-  try {
-    const r = await fetch(`${API}/wallet/withdraw`, {
-      method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-      body: JSON.stringify({ amount })
-    });
-    const data = await r.json();
-    if (!r.ok) { msg.className='modal-msg err'; msg.textContent=data.error||'Failed'; return; }
-    msg.className='modal-msg success'; msg.textContent=`✅ ${data.message}`;
-    updateBalanceDisplay(data.newBalance);
-    toast(`Withdrawal of ₹${amount} initiated`, 'green');
-    document.getElementById('withdrawAmount').value = '';
-  } catch(e) { msg.className='modal-msg err'; msg.textContent='Server error'; }
 }
 
 async function loadTransactions() {
@@ -1257,14 +1435,18 @@ function switchWalletTab(el, tab) {
 
 function updateWithdrawBankInfo() {
   const bd = currentUser?.bankDetails;
-  const el = document.getElementById('withdrawBankInfo');
+  // top info bar (kept empty now, info is inside method sections)
+  document.getElementById('withdrawBankInfo').innerHTML = '';
+
+  const bdEl = document.getElementById('withdrawBankDetails');
   if (bd?.accountNumber) {
-    el.innerHTML = `<div class="saved-bank" style="margin:0"><div class="saved-bank-title">💳 Withdrawal to:</div>
+    bdEl.innerHTML = `<div class="saved-bank" style="margin:0">
+      <div class="saved-bank-title">✅ Saved Bank:</div>
       <div class="saved-bank-row"><strong>${bd.beneficiaryName}</strong> — ${bd.bankName}</div>
       <div class="saved-bank-row">A/C: ****${bd.accountNumber.slice(-4)} &nbsp;|&nbsp; IFSC: ${bd.ifscCode}</div>
     </div>`;
   } else {
-    el.innerHTML = `<div class="bank-info" style="color:var(--accent-red);border-color:rgba(255,61,87,0.3)">⚠️ No bank details found. <a href="#" onclick="closeModal('walletModal');openModal('bankModal')" style="color:var(--accent-cyan)">Add bank details</a> before withdrawing.</div>`;
+    bdEl.innerHTML = '';
   }
 }
 
