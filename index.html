@@ -1342,7 +1342,7 @@ async function doDeposit() { showDepositQR(); } // kept for compatibility
 async function doWithdraw() {
   const amount = parseFloat(document.getElementById('withdrawAmount').value);
   const msg = document.getElementById('withdrawMsg');
-  if (!amount || amount < 100) { msg.className='modal-msg err'; msg.textContent='Minimum withdrawal is ₹100'; return; }
+  if (!amount || amount < 1100) { msg.className='modal-msg err'; msg.textContent='Minimum withdrawal is ₹1,100'; return; }
   if (currentUser && amount > currentUser.balance) { msg.className='modal-msg err'; msg.textContent='Insufficient balance'; return; }
 
   if (selectedWithdrawMethod === 'upi') {
